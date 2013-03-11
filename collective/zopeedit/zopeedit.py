@@ -1128,7 +1128,25 @@ class ExternalEditor:
         """Save changes to the file back to Zope"""
         logger.info("putChanges at: %s" % time.asctime(time.localtime()) )
 
-        f = open(self.content_file, 'rb')
+        # The file we are trying to open may not be availbale immediately
+        # because of virus scanners locking the file. Thus we wait and try
+        # again a couple of times before giving up.
+        file_opened = False
+        try_count = 0
+        while not file_opened:
+            try:
+                f = open(self.content_file, 'rb')
+                file_opened = True
+            except IOError:
+                time.sleep(2)
+                try_count += 1
+                if try_count > 30:
+                    raise
+
+        if try_count > 0:
+            logger.info("Document opened successfully after %s attempts." % 
+                        try_count)
+
         body = f.read()
         logger.info("Document is %s bytes long" % len(body) )
         f.close()
