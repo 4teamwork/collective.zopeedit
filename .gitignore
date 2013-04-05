@@ -1,0 +1,5 @@
+build/
+dist/
+collective/zopeedit/win32/Output/
+*.egg-info/
+.DS_Store
