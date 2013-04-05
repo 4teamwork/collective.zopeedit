@@ -4,6 +4,9 @@ Changelog
 (Unreleased) - 1.3.3
 --------------------
 
+    - Setup logging on module level.
+      [buchi]
+
     - Also make getmtime() calls more robust by retrying multiple times
       before giving up.
       [buchi]

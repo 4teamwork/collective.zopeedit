@@ -116,8 +116,14 @@ LOG_LEVELS = {'debug': logging.DEBUG,
               'error': logging.ERROR,
               'critical': logging.CRITICAL}
 
+# Setup logging.
 logger = logging.getLogger('zopeedit')
-log_file = None
+log_file = mktemp(suffix = '-zopeedit-log.txt')
+log_filehandler = logging.FileHandler(log_file)
+log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+log_filehandler.setFormatter(log_formatter)
+logger.addHandler(log_filehandler)
+logger.setLevel(logging.DEBUG)
 
 # Retrieve locale from system
 lc, encoding = locale.getdefaultlocale()
@@ -395,16 +401,6 @@ class ExternalEditor:
         """
         self.networkerror = False
         self.input_file = input_file
-        # Setup logging.
-        global log_file
-        log_file = mktemp(suffix = '-zopeedit-log.txt')
-        # print log_file
-        log_filehandler = logging.FileHandler(log_file)
-        log_formatter = logging.Formatter(
-                                '%(asctime)s %(levelname)s %(message)s')
-        log_filehandler.setFormatter(log_formatter)
-        logger.addHandler(log_filehandler)
-        logger.setLevel(logging.DEBUG)
 
         logger.info(_(
                 "\n"
