@@ -139,6 +139,38 @@ _ = lang.lgettext
 ## gettext end init
 
 
+def retry_on_ioerror(func):
+    """A decorator which tries to avoid IOErrors when accessing files.
+
+       Files may not be available immediately because of other processes (e.g.
+       virus scanners) locking the file. We simply wait and try again a couple
+       of times before giving up.
+    """
+    def wrapper(*args, **kwargs):
+        success = False
+        try_count = 0
+        while not success:
+            try:
+                res = func(*args, **kwargs)
+                success = True
+            except IOError:
+                time.sleep(2)
+                try_count += 1
+                if try_count > 30:
+                    raise
+
+        if try_count > 0:
+            logger.info("IOError avoided after %s attempts." % try_count)
+
+        return res
+
+    return wrapper
+
+
+safe_getmtime = retry_on_ioerror(os.path.getmtime)
+safe_open = retry_on_ioerror(open)
+
+
 class MultiPartForm(object):
     """Accumulate the data to be used when posting a form."""
 
@@ -903,7 +935,7 @@ class ExternalEditor:
                          self,
                          exit=0)
         
-        self.last_mtime = os.path.getmtime(self.content_file)
+        self.last_mtime = safe_getmtime(self.content_file)
         self.initial_mtime = self.last_mtime
         self.last_saved_mtime = self.last_mtime
         self.dirty_file = False
@@ -1044,7 +1076,7 @@ class ExternalEditor:
         while 1:
             if not final_loop:
                 self.editor.wait(self.save_interval)
-            mtime = os.path.getmtime(self.content_file)
+            mtime = safe_getmtime(self.content_file)
 
             if mtime != self.last_mtime:
                 logger.debug("monitorFile: File is dirty : changes detected !")
@@ -1128,25 +1160,7 @@ class ExternalEditor:
         """Save changes to the file back to Zope"""
         logger.info("putChanges at: %s" % time.asctime(time.localtime()) )
 
-        # The file we are trying to open may not be availbale immediately
-        # because of virus scanners locking the file. Thus we wait and try
-        # again a couple of times before giving up.
-        file_opened = False
-        try_count = 0
-        while not file_opened:
-            try:
-                f = open(self.content_file, 'rb')
-                file_opened = True
-            except IOError:
-                time.sleep(2)
-                try_count += 1
-                if try_count > 30:
-                    raise
-
-        if try_count > 0:
-            logger.info("Document opened successfully after %s attempts." % 
-                        try_count)
-
+        f = safe_open(self.content_file, 'rb')
         body = f.read()
         logger.info("Document is %s bytes long" % len(body) )
         f.close()
