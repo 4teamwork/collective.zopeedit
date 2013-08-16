@@ -159,7 +159,7 @@ def retry_on_ioerror(func):
             try:
                 res = func(*args, **kwargs)
                 success = True
-            except IOError:
+            except (IOError, WindowsError):
                 time.sleep(2)
                 try_count += 1
                 if try_count > 30:
