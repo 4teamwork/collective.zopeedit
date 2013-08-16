@@ -1,6 +1,13 @@
 Changelog
 =========
 
+(2013-08-16) - 1.3.4
+--------------------
+
+    - Catch WindowsError when trying file system call multiple times.
+      [buchi]
+
+
 (Unreleased) - 1.3.3
 --------------------
 
